@@ -15,12 +15,24 @@ const FEEDS: Record<string, string[]> = {
     'https://www.ndr.de/nachrichten/index-rss.xml',
     'https://www.br.de/nachrichten/meldungen-100~rss.xml',
     'https://www.rbb24.de/aktuell/index.xml/feed=rss.xml'
-  ],
-  local: [
-    'https://www.ndr.de/nachrichten/index-rss.xml',
-    'https://www.br.de/nachrichten/meldungen-100~rss.xml',
-    'https://www.rbb24.de/aktuell/index.xml/feed=rss.xml'
   ]
+};
+
+// Zuordnung der 6 verifizierten, aktiven Landes-Feeds und der 5 ehrlichen Lücken
+const REGIONAL_FEEDS: Record<string, string[]> = {
+  nord: ['https://www.ndr.de/nachrichten/index-rss.xml'],
+  nrw: ['https://www.wdr.de/xml/newsticker.rdf'],
+  bayern: ['https://www.br.de/nachrichten/meldungen-100~rss.xml'],
+  bw: ['https://www.swr.de/~rss/swraktuell/swraktuell-bw-100.xml'],
+  rp: ['https://www.swr.de/~rss/swraktuell/swraktuell-rp-100.xml'],
+  berlin_brandenburg: ['https://www.rbb24.de/aktuell/index.xml/feed=rss.xml'],
+  
+  // Ehrliche Lücken (keine aktiven Feeds verfügbar -> liefern Fallback auf Bund)
+  hessen: [],
+  saarland: [],
+  sachsen: [],
+  sachsen_anhalt: [],
+  thueringen: []
 };
 
 export interface NewsItem {
@@ -31,20 +43,43 @@ export interface NewsItem {
   pubDate: string;
   source: string;
   sourceUrl: string;
-  level: 'local' | 'regional' | 'national' | 'global';
+  level: 'regional' | 'national' | 'global';
   status: 'belegt' | 'vorlaeufig';
 }
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const level = searchParams.get('level') || 'national';
+    let level = searchParams.get('level') || 'national';
+    const region = searchParams.get('region') || '';
     
-    if (!['local', 'regional', 'national', 'global'].includes(level)) {
+    // Legacy mapping: Falls noch Anfragen für 'local' eingehen, mappen wir sie sauber zu 'regional'
+    if (level === 'local') {
+      level = 'regional';
+    }
+    
+    if (!['regional', 'national', 'global'].includes(level)) {
       return NextResponse.json({ error: 'Ungültige geografische Ebene' }, { status: 400 });
     }
 
-    const feedUrls = FEEDS[level] || FEEDS.national;
+    let feedUrls = FEEDS[level] || FEEDS.national;
+
+    // Regionenwahl-Logik
+    if (level === 'regional') {
+      if (region && REGIONAL_FEEDS[region]) {
+        const regionUrls = REGIONAL_FEEDS[region];
+        if (regionUrls.length > 0) {
+          feedUrls = regionUrls;
+        } else {
+          // Ehrliche Lücke: Fallback auf nationalen Feed
+          feedUrls = FEEDS.national;
+        }
+      } else {
+        // Noch keine Region gewählt oder leerer Parameter: Fallback auf nationalen Feed
+        feedUrls = FEEDS.national;
+      }
+    }
+
     const allItems: NewsItem[] = [];
 
     for (const url of feedUrls) {
