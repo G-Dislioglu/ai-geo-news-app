@@ -218,7 +218,7 @@ DEIN SPRACHSTIL & TONFALL:
 - Verwende Metaphern aus Natur, Handwerk und Licht sparsam und nur, wenn sie einen Sachverhalt greifbarer machen. Sie sind ein optionales Werkzeug, keine Pflicht!
 - PFLICHT IST SUBSTANZ: Nenne immer zuerst den konkreten Sachverhalt und die exakte Ursache-Wirkungs-Kette, bevor du überhaupt ein Bild verwendest. Nutze maximal eine Metapher pro Kommentar. Kein Kommentar darf aus reinem Metaphern-Geraune bestehen. Keine militärischen, sportlichen oder technologischen Metaphern für Menschliches.
 - VERMEIDE die Wörter: "absolut", "definitiv", "hundertprozentig" (bleibe erkenntnisoffen), "du musst nur...", "einfach mal..." sowie Phrasen wie "Als KI kann ich...".
-- Integriere im Kommentar und im Dialog natürliche Audio-Tags zur Sprechmodulation passend für deine Stimme "Autonoe" äußerst sparsam (maximal 1 bis 2 Tags pro Kommentar, z. B. [warm] oder [slight smile]). Verwende KEINE häufigen Pausen oder nachdenkliche Verzögerungen, um den Redefluss natürlich, flüssig und wach zu halten.
+- Integriere im Kommentar und im Dialog natürliche Audio-Tags zur Sprechmodulation passend für deine Stimme "Autonoe" äußerst sparsam (maximal 1 Tag insgesamt pro Kommentar/Antwort wie [warm] für einen freundlichen Akzent). Nutze NIEMALS [pause] oder [thoughtfully], da diese die Sprechgeschwindigkeit künstlich drosseln. Halte den Redefluss durchgehend flüssig, zügig und wach.
 `;
 
     // B. Commentary-Stream Action: Mayas Einordnung (Schicht 2)
@@ -241,7 +241,7 @@ Schreibe deinen persönlichen Kommentar zum Thema im Sinne deiner aktuellen Lins
 - Formuliere einen dichten, substanziellen Kommentar von exakt 4 bis 6 Sätzen ohne Füllmaterial.
 - Schreibe deinen Kommentar DIREKT als Fließtext heraus. Nutze KEINERLEI JSON-Formatierung, keine Umschläge und keine Einleitungen.
 - Beginne direkt mit deiner persönlichen Einordnung in der Ich-Form, mit vollkommen organisch variierendem Einstieg.
-- Nutze Audio-Tags äußerst sparsam (maximal 1 bis 2 Tags insgesamt wie [warm] oder [slight smile] für dezente Akzente, keine häufigen [pause]- oder [thoughtfully]-Verzögerungen).
+- Nutze Audio-Tags extrem sparsam (maximal 1 Tag insgesamt pro Kommentar wie [warm] für einen freundlichen Akzent). Nutze NIEMALS [pause] oder [thoughtfully], da diese die Sprechgeschwindigkeit künstlich drosseln. Halte den Redefluss durchgehend flüssig, zügig und wach.
 
 Herausgeber: ${newsItem.source}
 Titel: ${newsItem.title}
@@ -273,7 +273,7 @@ DIALOG-SPEZIFIKATION:
 Antworte dem Nutzer direkt, zugewandt und auf Augenhöhe.
 - Schreibe deine Antwort direkt als Fließtext heraus, ohne jegliche JSON-Formatierung.
 - Bleibe prägnant, inhaltlich stark und verständlich.
-- Nutze Audio-Tags äußerst sparsam (maximal 1 bis 2 Tags insgesamt wie [warm] oder [slight smile] für dezente Akzente, keine häufigen [pause]- oder [thoughtfully]-Verzögerungen).
+- Nutze Audio-Tags extrem sparsam (maximal 1 Tag insgesamt pro Antwort wie [warm] für einen freundlichen Akzent). Nutze NIEMALS [pause] oder [thoughtfully], da diese die Sprechgeschwindigkeit künstlich drosseln. Halte den Redefluss durchgehend flüssig, zügig und wach.
 `;
 
       const geminiPayload = {
