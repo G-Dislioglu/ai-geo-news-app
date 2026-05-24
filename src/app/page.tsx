@@ -416,6 +416,16 @@ export default function Home() {
           }
         }
 
+        // --- Stream-Abschluss für verbleibende Sätze ---
+        const finalSentences = fullCommentary.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+        if (finalSentences.length > lastPlayedIndex) {
+          for (let i = lastPlayedIndex; i < finalSentences.length; i++) {
+            if (autoSpeak && audioQueueRef.current && (audioQueueRef.current as any).pushSentence) {
+              (audioQueueRef.current as any).pushSentence(finalSentences[i]);
+            }
+          }
+        }
+
         // Finalisiere dynamic queue
         if (autoSpeak && audioQueueRef.current && (audioQueueRef.current as any).finalizeDynamic) {
           (audioQueueRef.current as any).finalizeDynamic();
@@ -518,6 +528,16 @@ export default function Home() {
           }
         }
 
+        // --- Stream-Abschluss für verbleibende Sätze im Dialog ---
+        const finalSentences = fullReply.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+        if (finalSentences.length > lastPlayedIndex) {
+          for (let i = lastPlayedIndex; i < finalSentences.length; i++) {
+            if (autoSpeak && audioQueueRef.current && (audioQueueRef.current as any).pushSentence) {
+              (audioQueueRef.current as any).pushSentence(finalSentences[i]);
+            }
+          }
+        }
+
         if (autoSpeak && audioQueueRef.current && (audioQueueRef.current as any).finalizeDynamic) {
           (audioQueueRef.current as any).finalizeDynamic();
         }
@@ -616,7 +636,7 @@ export default function Home() {
                 <Compass className="w-4 h-4 text-cyan-400" /> Geografischer Fokus
               </h2>
               <span className={`geo-badge ${geoRadius}`}>
-                {geoRadius === 'local' && 'Mikro-Lokal'}
+                {geoRadius === 'local' && 'Kiez & Region'}
                 {geoRadius === 'regional' && 'Regional'}
                 {geoRadius === 'national' && 'Landesweit'}
                 {geoRadius === 'global' && 'Weltweit'}
@@ -633,11 +653,17 @@ export default function Home() {
             />
             
             <div className="flex justify-between text-[11px] font-semibold text-slate-400 uppercase px-1">
-              <span className={geoRadius === 'local' ? 'text-emerald-400' : ''}>Kiez</span>
+              <span className={geoRadius === 'local' ? 'text-emerald-400' : ''}>Kiez & Region</span>
               <span className={geoRadius === 'regional' ? 'text-purple-400' : ''}>Region</span>
               <span className={geoRadius === 'national' ? 'text-blue-400' : ''}>Bund</span>
               <span className={geoRadius === 'global' ? 'text-cyan-400' : ''}>Welt</span>
             </div>
+
+            {geoRadius === 'local' && (
+              <div className="text-[10px] text-slate-400 bg-white/2 border border-white/5 rounded-lg p-2.5 leading-relaxed mt-2">
+                <span className="font-semibold text-emerald-400">Transparenz-Hinweis:</span> Dieser Fokus nutzt die regionalen Feeds der ARD-Landesrundfunkanstalten (z. B. NDR, BR, rbb), um geprüfte Regionalmeldungen aus deiner erweiterten Umgebung anzuzeigen.
+              </div>
+            )}
           </div>
 
           {/* News Feed List */}
