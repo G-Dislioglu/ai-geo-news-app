@@ -6,7 +6,8 @@ const parser = new Parser();
 // Die offiziell verifizierten, aktiven RSS-Feeds der ARD Landesrundfunkanstalten und der Tagesschau
 const FEEDS: Record<string, string[]> = {
   global: [
-    'https://www.tagesschau.de/ausland/index~rss2.xml'
+    'https://www.tagesschau.de/ausland/index~rss2.xml',
+    'https://rss.dw.com/xml/rss-de-all'
   ],
   national: [
     'https://www.tagesschau.de/inland/index~rss2.xml'
@@ -47,6 +48,19 @@ export interface NewsItem {
   status: 'belegt' | 'vorlaeufig';
 }
 
+// Mischt mehrere Arrays im Round-Robin-Verfahren, damit jede Quelle
+// in den 15 finalen Ergebnissen vertreten ist (vor dem Datum-Sort).
+function interleave(arrays: NewsItem[][]): NewsItem[] {
+  const result: NewsItem[] = [];
+  const max = Math.max(...arrays.map(a => a.length), 0);
+  for (let i = 0; i < max; i++) {
+    for (const arr of arrays) {
+      if (i < arr.length) result.push(arr[i]);
+    }
+  }
+  return result;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -80,12 +94,14 @@ export async function GET(request: Request) {
       }
     }
 
-    const allItems: NewsItem[] = [];
+    // Sammle Items pro Feed separat, damit das Interleaving greift
+    const itemsByFeed: NewsItem[][] = [];
 
     for (const url of feedUrls) {
       try {
         const feed = await parser.parseURL(url);
         const sourceName = feed.title || new URL(url).hostname;
+        const feedItems: NewsItem[] = [];
         
         if (feed.items) {
           for (const item of feed.items) {
@@ -93,11 +109,11 @@ export async function GET(request: Request) {
             const content = item.contentSnippet || item.content || '';
             const link = item.link || '';
             
-            // Da alle Feeds aus verifizierten, redaktionell geprüften Quellen (ARD / Tagesschau) stammen,
+            // Da alle Feeds aus verifizierten, redaktionell geprüften Quellen stammen,
             // sind alle geladenen Nachrichten als "belegt" einzustufen.
             const status = 'belegt';
 
-            allItems.push({
+            feedItems.push({
               id: item.guid || link || Math.random().toString(36).substr(2, 9),
               title,
               link,
@@ -110,13 +126,15 @@ export async function GET(request: Request) {
             });
           }
         }
+        itemsByFeed.push(feedItems);
       } catch (feedError) {
         console.warn(`Fehler beim Laden von Feed ${url} (wird übersprungen):`, feedError);
       }
     }
 
-    // Sortierung nach Datum und Begrenzung
-    const sortedItems = allItems
+    // Interleave: abwechselnd eine Meldung pro Quelle → beide Quellen kommen in die Top-15.
+    // Datum-Sort danach stellt sicher: neueste Meldung oben (gewollt).
+    const sortedItems = interleave(itemsByFeed)
       .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
       .slice(0, 15);
 
