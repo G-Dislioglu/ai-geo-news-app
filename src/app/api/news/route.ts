@@ -6,10 +6,10 @@ const parser = new Parser();
 // Die offiziell verifizierten, aktiven RSS-Feeds der ARD Landesrundfunkanstalten und der Tagesschau
 const FEEDS: Record<string, string[]> = {
   global: [
-    'https://www.tagesschau.de/ausland/~rss2.xml'
+    'https://www.tagesschau.de/ausland/index~rss2.xml'
   ],
   national: [
-    'https://www.tagesschau.de/inland/~rss2.xml'
+    'https://www.tagesschau.de/inland/index~rss2.xml'
   ],
   regional: [
     'https://www.ndr.de/nachrichten/index-rss.xml',
