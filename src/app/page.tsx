@@ -55,6 +55,7 @@ export default function Home() {
   });
   const recognitionRef = useRef<any>(null);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const commentaryAbortRef = useRef<AbortController | null>(null);
 
   // Map slider value (0-2) to string levels
   const sliderValues: Array<'regional' | 'national' | 'global'> = ['regional', 'national', 'global'];
@@ -222,6 +223,31 @@ export default function Home() {
           queue.audioObjects[index] = audio;
           return audio;
         }
+        // Einmaliger Retry: Antwort kam, aber ohne Audio (z.B. Rate-Limit) — 1,5 s warten, nochmal versuchen
+        if (!queue.abortController?.signal.aborted) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          if (queue.abortController?.signal.aborted) return null;
+          const retryRes = await fetch('/api/maya/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: queue.sentences[index] }),
+            signal: queue.abortController?.signal,
+          });
+          if (!retryRes.ok) return null;
+          const retryData = await retryRes.json();
+          if (retryData.success && retryData.audioContent) {
+            const binaryString = window.atob(retryData.audioContent);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+            const blob = new Blob([bytes], { type: retryData.mimeType || 'audio/wav' });
+            const audioSrc = URL.createObjectURL(blob);
+            const audio = new Audio(audioSrc);
+            audio.onerror = () => URL.revokeObjectURL(audioSrc);
+            queue.audioObjects[index] = audio;
+            return audio;
+          }
+        }
         return null;
       } catch (err) {
         console.warn(`Fehler beim Laden von Satz-Chunk ${index}:`, err);
@@ -236,10 +262,9 @@ export default function Home() {
       }
     };
 
-    // Für statischen Text direkt die ersten beiden Sätze parallel vorladen
+    // Für statischen Text nur den ersten Satz vorladen; weitere folgen organisch über playNext
     if (!isDynamic) {
       prefetchNext(0);
-      prefetchNext(1);
     }
 
     // Wiedergabe-Schleife
@@ -301,7 +326,10 @@ export default function Home() {
       queue.fetchPromises.push(null as any);
       
       const newIndex = queue.sentences.length - 1;
-      prefetchNext(newIndex);
+      // Nur vorladen wenn nah am aktuellen Satz — verhindert paralleles Feuern vieler TTS-Anfragen
+      if (newIndex <= queue.currentIndex + 1) {
+        prefetchNext(newIndex);
+      }
       
       // Falls der Player am Ende gewartet hat, starten wir die Wiedergabe neu
       if (queue.currentIndex === newIndex) {
@@ -348,10 +376,16 @@ export default function Home() {
   // Hebel A: Paralleles Laden von Fakten und gestreamtem Kommentar
   const generateMayaCommentary = async () => {
     if (!selectedNews) return;
+    // Alten commentary_stream-Fetch sauber abbrechen, damit keine Saetze der alten Linse mehr gepusht werden
+    if (commentaryAbortRef.current) {
+      commentaryAbortRef.current.abort();
+    }
+    const commentaryAbort = new AbortController();
+    commentaryAbortRef.current = commentaryAbort;
     setLoadingMaya(true);
     setMayaError(null);
     setMayaData({ factsSummary: '', commentary: '' });
-    setChatHistory([]); 
+    setChatHistory([]);
     stopAudio();
 
     // 1. Fakten-Laden (Aktion 'facts' - extrem schneller JSON Call für Schicht 1)
@@ -389,7 +423,8 @@ export default function Home() {
           mode: lensMode,
           newsItem: selectedNews,
           geoRadius
-        })
+        }),
+        signal: commentaryAbort.signal,
       });
 
       if (!res.ok) throw new Error('Kommentar-Streaming fehlgeschlagen');
@@ -450,6 +485,7 @@ export default function Home() {
         }
       }
     } catch (err: any) {
+      if (err?.name === 'AbortError') return; // Sauberer Abbruch durch Linsenwechsel
       console.error(err);
       setMayaError(err.message || 'Kommentar-Streaming fehlgeschlagen');
       setLoadingMaya(false);
