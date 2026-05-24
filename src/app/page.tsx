@@ -15,7 +15,8 @@ export interface MayaResponse {
 
 export default function Home() {
   // App-Zustände
-  const [geoRadius, setGeoRadius] = useState<'local' | 'regional' | 'national' | 'global'>('national');
+  const [geoRadius, setGeoRadius] = useState<'regional' | 'national' | 'global'>('national');
+  const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loadingNews, setLoadingNews] = useState<boolean>(false);
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
@@ -55,14 +56,31 @@ export default function Home() {
   const recognitionRef = useRef<any>(null);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Map slider value (0-3) to string levels
-  const sliderValues: Array<'local' | 'regional' | 'national' | 'global'> = ['local', 'regional', 'national', 'global'];
-  const getSliderIndex = (val: 'local' | 'regional' | 'national' | 'global') => sliderValues.indexOf(val);
+  // Map slider value (0-2) to string levels
+  const sliderValues: Array<'regional' | 'national' | 'global'> = ['regional', 'national', 'global'];
+  const getSliderIndex = (val: 'regional' | 'national' | 'global') => sliderValues.indexOf(val);
 
-  // 1. Nachrichten laden bei Änderung des Geo-Radius
+  // 1. Auslesen der gespeicherten Region aus localStorage beim Mounten
   useEffect(() => {
-    fetchNews(geoRadius);
-  }, [geoRadius]);
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('geoSphere_region');
+      if (saved) {
+        setSelectedRegion(saved);
+      }
+    }
+  }, []);
+
+  // 2. Nachrichten laden bei Änderung des Geo-Radius oder der Region
+  useEffect(() => {
+    fetchNews(geoRadius, selectedRegion);
+  }, [geoRadius, selectedRegion]);
+
+  const handleRegionChange = (regionVal: string) => {
+    setSelectedRegion(regionVal);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('geoSphere_region', regionVal);
+    }
+  };
 
   // 2. Mayas Kommentar neu generieren bei Wechsel des Artikels oder der Linse
   useEffect(() => {
@@ -76,10 +94,10 @@ export default function Home() {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
-  const fetchNews = async (level: string) => {
+  const fetchNews = async (level: string, regionVal = selectedRegion) => {
     setLoadingNews(true);
     try {
-      const res = await fetch(`/api/news?level=${level}`);
+      const res = await fetch(`/api/news?level=${level}&region=${regionVal}`);
       if (!res.ok) throw new Error('Fehler beim Laden');
       const data = await res.json();
       setNews(data.news || []);
@@ -636,8 +654,7 @@ export default function Home() {
                 <Compass className="w-4 h-4 text-cyan-400" /> Geografischer Fokus
               </h2>
               <span className={`geo-badge ${geoRadius}`}>
-                {geoRadius === 'local' && 'Kiez & Region'}
-                {geoRadius === 'regional' && 'Regional'}
+                {geoRadius === 'regional' && (selectedRegion ? 'Regional' : 'Region wählen')}
                 {geoRadius === 'national' && 'Landesweit'}
                 {geoRadius === 'global' && 'Weltweit'}
               </span>
@@ -646,22 +663,67 @@ export default function Home() {
             <input 
               type="range" 
               min="0" 
-              max="3" 
+              max="2" 
               value={getSliderIndex(geoRadius)}
               onChange={(e) => setGeoRadius(sliderValues[parseInt(e.target.value)])}
               className="geo-slider my-2"
             />
             
             <div className="flex justify-between text-[11px] font-semibold text-slate-400 uppercase px-1">
-              <span className={geoRadius === 'local' ? 'text-emerald-400' : ''}>Kiez & Region</span>
               <span className={geoRadius === 'regional' ? 'text-purple-400' : ''}>Region</span>
               <span className={geoRadius === 'national' ? 'text-blue-400' : ''}>Bund</span>
               <span className={geoRadius === 'global' ? 'text-cyan-400' : ''}>Welt</span>
             </div>
 
-            {geoRadius === 'local' && (
-              <div className="text-[10px] text-slate-400 bg-white/2 border border-white/5 rounded-lg p-2.5 leading-relaxed mt-2">
-                <span className="font-semibold text-emerald-400">Transparenz-Hinweis:</span> Dieser Fokus nutzt die regionalen Feeds der ARD-Landesrundfunkanstalten (z. B. NDR, BR, rbb), um geprüfte Regionalmeldungen aus deiner erweiterten Umgebung anzuzeigen.
+            {/* Region Dropdown Selector */}
+            {geoRadius === 'regional' && (
+              <div className="flex flex-col gap-2 mt-3 border-t border-white/5 pt-3">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Wähle deine Region:</label>
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => handleRegionChange(e.target.value)}
+                  className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400/40"
+                >
+                  <option value="" className="bg-slate-950 text-slate-400">-- Bitte Region wählen... --</option>
+                  <option value="nord" className="bg-slate-950 text-white">Norddeutschland (NDR)</option>
+                  <option value="nrw" className="bg-slate-950 text-white">Nordrhein-Westfalen (WDR)</option>
+                  <option value="bayern" className="bg-slate-950 text-white">Bayern (BR)</option>
+                  <option value="bw" className="bg-slate-950 text-white">Baden-Württemberg (SWR)</option>
+                  <option value="rp" className="bg-slate-950 text-white">Rheinland-Pfalz (SWR)</option>
+                  <option value="berlin_brandenburg" className="bg-slate-950 text-white">Berlin & Brandenburg (rbb)</option>
+                  <option value="hessen" className="bg-slate-950 text-white">Hessen (hr - Kein Feed verfügbar)</option>
+                  <option value="saarland" className="bg-slate-950 text-white">Saarland (SR - Kein Feed verfügbar)</option>
+                  <option value="sachsen" className="bg-slate-950 text-white">Sachsen (MDR - Kein Feed verfügbar)</option>
+                  <option value="sachsen_anhalt" className="bg-slate-950 text-white">Sachsen-Anhalt (MDR - Kein Feed verfügbar)</option>
+                  <option value="thueringen" className="bg-slate-950 text-white">Thüringen (MDR - Kein Feed verfügbar)</option>
+                </select>
+
+                {/* Erstbesuchs-Hinweis */}
+                {selectedRegion === '' && (
+                  <div className="text-[10px] text-cyan-300 bg-cyan-950/20 border border-cyan-900/50 rounded-lg p-2.5 leading-relaxed mt-1 flex items-start gap-2">
+                    <AlertCircle className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                    <span>
+                      Bitte wähle eine Region aus, um lokale Nachrichten anzuzeigen. Bis dahin zeigen wir dir Meldungen aus ganz Deutschland.
+                    </span>
+                  </div>
+                )}
+
+                {/* Info-Box für Lücken */}
+                {['hessen', 'saarland', 'sachsen', 'sachsen_anhalt', 'thueringen'].includes(selectedRegion) && (
+                  <div className="text-[10px] text-amber-300 bg-amber-950/20 border border-amber-900/50 rounded-lg p-2.5 leading-relaxed mt-1 flex items-start gap-2">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Transparenz-Hinweis:</strong> Für diese Region stellt der zuständige ARD-Sender aktuell keinen aktiven, standardkonformen RSS-Nachrichten-Feed zur Verfügung. Um Täuschungen zu vermeiden, zeigen wir dir stattdessen den verifizierten, bundesweiten Tagesschau-Feed an.
+                    </span>
+                  </div>
+                )}
+
+                {/* Deskriptiver Hinweis für aktive Feeds */}
+                {['nord', 'nrw', 'bayern', 'bw', 'rp', 'berlin_brandenburg'].includes(selectedRegion) && (
+                  <div className="text-[10px] text-slate-400 bg-white/2 border border-white/5 rounded-lg p-2.5 leading-relaxed mt-1">
+                    <span className="font-semibold text-emerald-400">Transparenz-Hinweis:</span> Dieser Fokus nutzt die regionalen Feeds der ARD-Landesrundfunkanstalten (z. B. NDR, BR, rbb), um geprüfte Regionalmeldungen aus deiner erweiterten Umgebung anzuzeigen.
+                  </div>
+                )}
               </div>
             )}
           </div>
