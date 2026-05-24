@@ -1,26 +1,268 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background-dark: #060913;
+  --bg-gradient: radial-gradient(circle at 50% 50%, #0e1628 0%, #060913 100%);
+  --foreground: #f3f4f6;
+  
+  /* Brand Colors (Maya Palette) */
+  --color-primary: #8b5cf6; /* Deep Violet */
+  --color-primary-glow: rgba(139, 92, 246, 0.15);
+  --color-accent: #06b6d4; /* Neon Cyan */
+  --color-accent-glow: rgba(6, 182, 212, 0.15);
+  
+  /* Geographic Level Colors */
+  --color-local: #10b981; /* Emerald Green */
+  --color-local-glow: rgba(16, 185, 129, 0.15);
+  --color-regional: #a855f7; /* Purple */
+  --color-regional-glow: rgba(168, 85, 247, 0.15);
+  --color-national: #3b82f6; /* Blue */
+  --color-national-glow: rgba(59, 130, 246, 0.15);
+  --color-global: #06b6d4; /* Cyan */
+  --color-global-glow: rgba(6, 182, 212, 0.15);
+  
+  /* Alert / Info Colors */
+  --color-warning: #f59e0b; /* Amber */
+  --color-warning-glow: rgba(245, 158, 11, 0.1);
+  --color-success: #10b981;
+  
+  /* Glassmorphism Details */
+  --glass-bg: rgba(13, 20, 38, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-focus: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+  --glass-blur: blur(16px);
 }
 
 body {
-  background: var(--background);
+  background: var(--background-dark);
+  background-image: var(--bg-gradient);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* Ambient Background Blobs */
+.ambient-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  animation: float 25s infinite ease-in-out;
+}
+
+.blob-1 {
+  width: 500px;
+  height: 500px;
+  background: var(--color-primary);
+  top: -10%;
+  left: 10%;
+  animation-duration: 20s;
+}
+
+.blob-2 {
+  width: 600px;
+  height: 600px;
+  background: var(--color-accent);
+  bottom: -15%;
+  right: 10%;
+  animation-duration: 28s;
+}
+
+.blob-3 {
+  width: 400px;
+  height: 400px;
+  background: #ec4899; /* Pink */
+  top: 40%;
+  left: 50%;
+  opacity: 0.08;
+  animation-duration: 35s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(50px, -70px) scale(1.1);
+  }
+  66% {
+    transform: translate(-30px, 40px) scale(0.95);
+  }
+}
+
+/* Typography styles */
+h1, h2, h3, h4 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Premium Glassmorphism Class */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel:hover {
+  border-color: var(--glass-border-focus);
+}
+
+/* Custom Horizontal Radius Slider */
+.geo-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  transition: background 0.3s;
+}
+
+.geo-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 15px var(--color-accent);
+  cursor: pointer;
+  transition: transform 0.1s, background-color 0.3s;
+}
+
+.geo-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Geo Badge Styles */
+.geo-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.geo-badge.local {
+  background: var(--color-local-glow);
+  color: var(--color-local);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.geo-badge.regional {
+  background: var(--color-regional-glow);
+  color: var(--color-regional);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.geo-badge.national {
+  background: var(--color-national-glow);
+  color: var(--color-national);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.geo-badge.global {
+  background: var(--color-global-glow);
+  color: var(--color-global);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+/* Verifiability Status Badge */
+.status-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.status-badge.belegt {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.vorlaeufig {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Radial Pulsing Radar Effect */
+.radar-pulse {
+  position: relative;
+}
+
+.radar-pulse::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--color-accent);
+  border-radius: inherit;
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0;
+  pointer-events: none;
+  animation: pulse-out 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+}
+
+@keyframes pulse-out {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Audio-Tag Formatting inside Chat */
+.audio-tag {
+  color: var(--color-primary);
+  font-style: italic;
+  font-weight: 500;
+  margin-right: 4px;
 }
