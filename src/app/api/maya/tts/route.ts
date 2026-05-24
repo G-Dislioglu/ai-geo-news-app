@@ -65,7 +65,7 @@ export async function POST(request: Request) {
           role: 'user',
           parts: [
             {
-              text: `Lies folgenden Text in deutscher Sprache mit deiner wachen, klaren Stimme Autonoe in natürlichem, normalem Sprechtempo vor. Beachte die eingebetteten Modulationsanweisungen:\n\n${text}`
+              text: `Lies folgenden Text in deutscher Sprache mit deiner wachen, ausdrucksstarken und lebendigen Stimme Autonoe in einem zügigen, natürlichen Sprechtempo vor. Vermeide jede gedehnte oder verlangsamte Aussprache. Beachte die eingebetteten Modulationsanweisungen:\n\n${text}`
             }
           ]
         }
